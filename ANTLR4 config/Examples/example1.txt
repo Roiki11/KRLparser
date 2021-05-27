@@ -2,6 +2,9 @@ DEF example()
 DECL INT i
 DECL POS cpos
 DECL AXIS jpos
+DECL INT A,B,C,D,E,F
+A = 2
+C = 0.5
 FOR i=1 TO 6
 $VEL_AXIS[i]=60
 ENDFOR
@@ -12,4 +15,5 @@ cpos = {POS: X 300,Y -100,Z 1500,A 0,B 90,C 0}
 ELSE
 cpos = {POS: X 250,Y -200,Z 1300,A 0,B 90,C 0}
 ENDIF
+A = A * C
 END

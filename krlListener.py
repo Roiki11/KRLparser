@@ -8,8 +8,9 @@ else:
 # This class defines a complete listener for a parse tree produced by krlParser.
 class krlListener(ParseTreeListener):
 
+
     # Enter a parse tree produced by krlParser#module.
-    def enterModule(self, ctx:krlParser.ModuleContext):
+    def enterModule(self, ctx: krlParser.ModuleContext):
         pass
 
     # Exit a parse tree produced by krlParser#module.
@@ -212,7 +213,7 @@ class krlListener(ParseTreeListener):
 
     # Exit a parse tree produced by krlParser#structElementList.
     def exitStructElementList(self, ctx:krlParser.StructElementListContext):
-        pass
+       pass
 
 
     # Enter a parse tree produced by krlParser#structElement.
@@ -573,6 +574,7 @@ class krlListener(ParseTreeListener):
     # Exit a parse tree produced by krlParser#enumElement.
     def exitEnumElement(self, ctx:krlParser.EnumElementContext):
         pass
+
 
 
 
