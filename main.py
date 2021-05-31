@@ -8,6 +8,13 @@ from krlListener import krlListener
 from krlVisitor import krlVisitor
 import pyparsing as pp
 
+constants = pp.oneOf(["VEL_AXIS","ACC","ACC_AXIS", "ACC_ETAX", "APO", "BASE", "CIRC_TYPE", "ECO_LEVEL",
+                      "GEAR_JERK", "IPO_MODE", "JERK", "LOAD", "ORI_TYPE", "ROTSYS", "SPL_ORI_JOINT_SYS_AUTO",
+                      "SYNC_ID", "SYNC_LIST", "TOOL", "VEL", "VEL_ETAX", "CIRC_MODE"])
+
+command = pp.oneOf(["CONTINUE","EXIT","GOTO", "HALT", "IF", "LOOP", "REPEAT", "WAIT", "SWITCH", "WHILE", "RETURN", "BRAKE",
+                    "INTERRUPT", "PTP", "PTP_REL", "LIN","LIN_REL", "CIRC", "CIRC_REL", "TRIGGER", "FOR", "ANOUT", "ANIN"])
+
 parseLetters = pp.Keyword("A-Z")
 number  = pp.Combine(pp.Word(pp.nums)+pp.Optional(".")+pp.Optional(pp.Word(pp.nums)))            # simple unsigned number
 variable = pp.Char(pp.alphas)          # single letter variable, such as x, z, m, etc.
@@ -17,6 +24,9 @@ lbracket, rbracket = pp.Suppress('['), pp.Suppress(']')
 
 varAssignment = variable("variable") + "=" + number("value")
 equation = variable + "=" + number + arithOp + number    # will match "x=2+2", etc.
+
+forStatement = command + varAssignment + "TO" + number
+constAssignment = pp.Suppress("$") + constants("sysvar") + lbracket + variable + rbracket + pp.Suppress("=") + number("value")
 
 class myListener(krlListener):
 
@@ -119,8 +129,19 @@ class myListener(krlListener):
                 except (pp.ParseException) as error:
                     pass
             else:
-                if str(items).find("FOR") != -1:
-                    print(items)
+                for x in items:
+                    if x.find("FOR",0,3) != -1:
+                        f = forStatement.parseString(x)
+                        print(f)
+                    elif x.find("$", 0, 1) != -1:
+                        s = x.strip("$")
+                        print(s)
+                        a = constAssignment.parseString(x)
+                        self.vars[a.sysvar] = a.value
+                        print(self.vars)
+                else:
+                    pass
+                    
 
 
     def enterStatement(self, ctx:krlParser.StatementContext):
