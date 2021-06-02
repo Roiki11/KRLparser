@@ -12,9 +12,9 @@ constants = pp.oneOf(["VEL_AXIS","ACC","ACC_AXIS", "ACC_ETAX", "APO", "BASE", "C
                       "GEAR_JERK", "IPO_MODE", "JERK", "LOAD", "ORI_TYPE", "ROTSYS", "SPL_ORI_JOINT_SYS_AUTO",
                       "SYNC_ID", "SYNC_LIST", "TOOL", "VEL", "VEL_ETAX", "CIRC_MODE"])
 
-command = pp.oneOf(["CONTINUE","EXIT","GOTO", "HALT", "IF", "LOOP", "REPEAT", "WAIT", "SWITCH", "WHILE", "RETURN", "BRAKE",
+keywords = pp.oneOf(["CONTINUE","EXIT","GOTO", "HALT", "IF", "LOOP", "REPEAT", "WAIT", "SWITCH", "WHILE", "RETURN", "BRAKE",
                     "INTERRUPT", "PTP", "PTP_REL", "LIN","LIN_REL", "CIRC", "CIRC_REL", "TRIGGER", "FOR", "ANOUT", "ANIN"])
-
+command = keywords("command") + pp.Optional(pp.Word(pp.alphas))("keyword")
 parseLetters = pp.Keyword("A-Z")
 number  = pp.Combine(pp.Word(pp.nums)+pp.Optional(".")+pp.Optional(pp.Word(pp.nums)))            # simple unsigned number
 variable = pp.Char(pp.alphas)          # single letter variable, such as x, z, m, etc.
@@ -35,9 +35,25 @@ class myListener(krlListener):
         self.subPrograms = {}
         self.vars = {}
         self.subRoutine = False
+        self.lineNo = 0
 
 
 
+    def addToProg(self, x, *y):
+
+        if len(y) != 0:
+            a = [y, x]
+        else:
+            a = x
+
+        if self.subRoutine is False:
+            program = self.mainProgram
+            g = {"N%i" % self.lineNo: a}
+            program.update(g)
+            self.lineNo += 1
+            #print(self.mainProgram)
+        else:
+            program = {"name": "0" }
 
 
     def makeProgram(self, *programs):
@@ -48,7 +64,7 @@ class myListener(krlListener):
         return mainProgram
 
     def enterModule(self, ctx: krlParser.ModuleContext):
-        print(ctx.getChildCount())
+        pass
 
 
     def enterModuleRoutines(self, ctx:krlParser.ModuleRoutinesContext):
@@ -106,46 +122,41 @@ class myListener(krlListener):
         pass
 
     def enterRoutineImplementationSection(self, ctx:krlParser.RoutineImplementationSectionContext):
-        print(ctx.getChildCount())
-        y = ctx.statementList().getChildCount()
-        lines = []
-        forLoop = []
-        ifLoop = []
+        pass
 
-        for x in range(0, y):
-            z = str(ctx.statementList().getChild(x).getText())
-            a = z.split()
-            lines.append(a)
-            #print(lines)
-
-        for items in lines:
-            if len(items) == 1:
-                try:
-                    a = items[0]
-                    g = varAssignment.parseString(a)
-                    if g.variable in self.vars:
-                        self.vars[g.variable] = g.value
-
-                except (pp.ParseException) as error:
-                    pass
-            else:
-                for x in items:
-                    if x.find("FOR",0,3) != -1:
-                        f = forStatement.parseString(x)
-                        print(f)
-                    elif x.find("$", 0, 1) != -1:
-                        s = x.strip("$")
-                        print(s)
-                        a = constAssignment.parseString(x)
-                        self.vars[a.sysvar] = a.value
-                        print(self.vars)
-                else:
-                    pass
-                    
 
 
     def enterStatement(self, ctx:krlParser.StatementContext):
-        pass
+
+        if ctx.IF() is not None:
+            x = ctx.getText()
+            cmd = []
+            cmd.append(x)
+            self.addToProg(cmd)
+
+        if ctx.PTP() is not None:
+            x = (ctx.getChild(1).getText())
+            self.addToProg(x, "PTP")
+
+        if ctx.FOR() is not None:
+            x = ctx.getText()
+            cmd = []
+            cmd.append(x)
+            self.addToProg(cmd)
+
+        if ctx.CIRC() is not None:
+            x = (ctx.getChildCount())-1
+            print(x)
+            print(ctx.getText())
+            for lines in range(0, x):
+                print("testt")
+                f = ctx.getChild(x).getText()
+                print(len(f))
+                print(f)
+
+
+
+
 
 
 
@@ -159,6 +170,7 @@ def main():
     printer = myListener()
     walker = ParseTreeWalker()
     walker.walk(printer, tree)
+
     
 
 
